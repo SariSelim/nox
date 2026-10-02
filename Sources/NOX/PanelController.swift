@@ -82,19 +82,42 @@ final class RootView: NSView {
     override func mouseEntered(with event: NSEvent) { onEnter?() }
     override func mouseExited(with event: NSEvent) { onExit?() }
 
-    override func draw(_ dirtyRect: NSRect) {
-        // Pencerenin üst kenarı ekranın tepesine yapışık; sadece alt köşeler yuvarlatılır.
-        let path = NSBezierPath(
-            roundedRect: bounds.insetBy(dx: 0.5, dy: 0.5),
-            byRoundingCorners: [.minXMinYCorner, .maxXMinYCorner],
-            cornerRadii: NSSize(width: cornerRadius, height: cornerRadius)
-        )
-        Palette.bg.setFill()
-        path.fill()
-        Palette.line.setStroke()
-        path.lineWidth = 1
-        path.stroke()
-    }
+override func draw(_ dirtyRect: NSRect) {
+    let rect = bounds.insetBy(dx: 0.5, dy: 0.5)
+    let radius = max(0, min(cornerRadius, min(rect.width, rect.height) / 2))
+    let path = NSBezierPath()
+
+    // Üst köşeler düz, alt köşeler yuvarlak.
+    path.move(to: NSPoint(x: rect.minX, y: rect.maxY))
+    path.line(to: NSPoint(x: rect.maxX, y: rect.maxY))
+    path.line(to: NSPoint(x: rect.maxX, y: rect.minY + radius))
+
+    path.appendArc(
+        withCenter: NSPoint(x: rect.maxX - radius, y: rect.minY + radius),
+        radius: radius,
+        startAngle: 0,
+        endAngle: -90,
+        clockwise: true
+    )
+
+    path.line(to: NSPoint(x: rect.minX + radius, y: rect.minY))
+
+    path.appendArc(
+        withCenter: NSPoint(x: rect.minX + radius, y: rect.minY + radius),
+        radius: radius,
+        startAngle: -90,
+        endAngle: -180,
+        clockwise: true
+    )
+
+    path.close()
+
+    Palette.bg.setFill()
+    path.fill()
+    Palette.line.setStroke()
+    path.lineWidth = 1
+    path.stroke()
+}
 }
 
 final class PanelController: NSObject, NSTextViewDelegate {
